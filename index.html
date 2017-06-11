@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Train Schedule</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+</head>
+
+<body>
+  <div class='container'>
+
+    <div class='jumbotron text-center'>
+      <h1>Train Schedule</h1>
+    </div>
+
+    <div class='panel panel-default'>
+      <div class='panel-heading'><h4><strong>Current Train Schedule</strong></h4></div>
+      <table class='table table-bordered table-striped'>
+      	<thead>
+    	  <tr>
+    	    <th>Train Name</th>
+    	    <th>Destination</th>
+    	    <th>Frequency (min)</th>
+    	    <th>Next Arrival</th>
+    	    <th>Minutes Away</th>
+    	  </tr>
+    	</thead>
+    	<tbody id='newTrain'></tbody>
+      </table>
+    </div>
+
+    <div class='panel panel-default'>
+      <div class='panel-heading'><h4><strong>Add Train</strong></h4></div>
+    </div>
+
+    <form class='form-group'>
+      <label for='nameInput'>Train Name:</label>
+      <input type='text' id='nameInput' class='form-control'>
+      <br><label for='destInput'>Destination:</label>
+      <input type='text' id='destInput' class='form-control'>
+      <br><label for='firstInput'>First Train Time (HH:mm - military time):</label>
+      <input type='text' id='firstInput' class='form-control'>
+      <br><label for='freqInput'>Frequency (min):</label>
+      <input type='text' id='freqInput' class='form-control'>
+      <br><button type='submit' class='btn btn-primary' id='submitButton'>Submit</button>
+    </form>
+    
+  </div> <!--container close-->
+
+  <script>
+    var config = {
+      apiKey: "AIzaSyAJS4YQWU5DmESeYueG1qH1NGkjv3DncEY",
+      authDomain: "fir-click-counter-7cdb9.firebaseapp.com",
+      databaseURL: "https://train-schedule-ea325.firebaseio.com/",
+      storageBucket: "fir-click-counter-7cdb9.appspot.com"
+      };
+
+    firebase.initializeApp(config);
+
+    var database = firebase.database();
+
+    var trainName;
+    var destination;
+    var frequency;
+    var firstTrainTime;
+
+    $('#submitButton').on('click', function(event) {
+    	event.preventDefault();
+
+    	trainName = $('#nameInput').val().trim();
+    	destination = $('#destInput').val().trim();
+    	frequency = $('#freqInput').val().trim();
+    	firstTrainTime = $('#firstInput').val().trim();
+
+    	database.ref().push({
+    		trainName: trainName,
+    		destination: destination,
+    		frequency: frequency,
+    		firstTrainTime: firstTrainTime
+    	});
+
+    });
+
+    database.ref().on('child_added', function(snapshot) {
+    	console.log(snapshot.val().trainName);
+    	console.log(snapshot.val().destination);
+    	console.log(snapshot.val().frequency);
+    	console.log(snapshot.val().firstTrainTime);
+
+
+
+        var minsAway;
+    	var timeDiff = moment().diff(snapshot.val().firstTrainTime, "minutes");
+    	var timeLeft = timeDiff % snapshot.val().frequency;
+    	var realTimeLeft = snapshot.val().frequency - timeLeft;
+    	var nextArrival = moment().add(realTimeLeft, 'minutes');
+    	console.log(timeDiff);
+    	console.log(realTimeLeft);
+    	console.log(moment(nextArrival).toString());
+    	console.log(moment().hour);
+
+
+
+    	$('#newTrain').append('<tr><td>' + snapshot.val().trainName + '</td><td>' + snapshot.val().destination + '</td><td>' + snapshot.val().frequency + '</td><td>' + nextArrival + '</td><td>' + minsAway + '</td></tr>');
+
+    }, function(errorObject) {
+    	console.log("Errors Handled: " + errorObject.code);
+    });
+
+
+
+  </script>
+</body>
+
+</html>
